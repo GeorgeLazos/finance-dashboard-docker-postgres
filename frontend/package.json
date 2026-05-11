@@ -1,0 +1,12 @@
+{
+  "name": "coinsafe-frontend",
+  "version": "1.0.0",
+  "description": "Dummy build step for CoinSafe dashboard",
+  "main": "index.html",
+  "scripts": {
+    "build": "mkdir -p dist && cp index.html dist/index.html",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "CoinSafe DevSecOps",
+  "license": "ISC"
+}
