@@ -1,2 +1,3 @@
+# Project template — no changes
 Flask==3.0.2
 psycopg2-binary==2.9.9

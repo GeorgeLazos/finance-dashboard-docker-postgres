@@ -1,6 +1,7 @@
 import os
 import time
 
+#Connect to database query results and generate financial report
 def generate_report():
     print("Starting daily financial report generation...")
     # TODO: Connect to database via environment variables
