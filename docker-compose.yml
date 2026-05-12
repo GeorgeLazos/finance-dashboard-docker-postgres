@@ -1,0 +1,76 @@
+#Define containers and their relationships
+services:
+  # Prepare frontend container 
+  frontend:
+    build: ./frontend  # Build from Dockerfile in frontend directory  
+    ports:
+      - "80:80"        # Map port 80 of container to port 80 on host
+    depends_on:
+      - api            # Ensure API container starts before frontend
+    networks:
+      - public_net     # Connect only to public network 
+
+  api:
+    build: ./api      # Build from Dockerfile in api directory
+    ports:
+      - "5000:5000"   # Map port 5000 of container to port 5000 on host
+    depends_on:
+      db:
+        condition: service_healthy # Ensure DB is healthy before starting API
+
+    #Set environment variables for DB connection - these will be used by the API to connect to the database
+    environment:
+      DB_HOST: db         
+      DB_USER: postgres
+      DB_PASSWORD: password
+      DB_NAME: coinsafe
+    mem_limit: 256m       # Limit memory usage to 256MB - container gets killed if it exceeds this limit
+    cpus: '0.5'           # Can only use half a CPU core
+    networks:
+      - public_net        # Connect to public network for frontend access
+      - private_net       # Connect to private network for DB access
+
+  reporter:
+    build: ./reporter   # Build from Dockerfile in reporter directory
+    depends_on:
+      db:
+        condition: service_healthy # Ensure DB is healthy before starting reporter
+    restart: "no"     # Runs once - compose must not restart it 
+    
+    #Set environment variables for DB connection - same as API since it connects to the same database
+    environment:
+      DB_HOST: db
+      DB_USER: postgres
+      DB_PASSWORD: password
+      DB_NAME: coinsafe
+    networks:
+      - private_net   # Connect only to private network for DB access
+
+  db:
+    #Official PostgreSQL image version 15 from Docker Hub
+    image: postgres:15
+
+    #Set environment variables for PostgreSQL
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: coinsafe
+    volumes:
+      - pgdata:/var/lib/postgresql/data                    #Data persists outside the countainer
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro #Run init.sql on startup to create tables and insert data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"] # Check if PostgreSQL is ready to accept connections
+      interval: 10s # Check every 10 seconds
+      timeout: 5s   # Give up if it takes more than 5 seconds to respond
+      retries: 5    # Consider unhealthy after 5 failed checks
+    networks:
+      - private_net # Connect only to private network for API and reporter access - invisible to frontend
+
+# Define volume(Storage) for PostgreSQL data 
+volumes:
+  pgdata:
+
+# Define public and private networks
+networks:
+  public_net:
+  private_net:
