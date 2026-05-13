@@ -1,9 +1,15 @@
 import os
 import psycopg2
-from flask import Flask, jsonify
+from flask import Flask, jsonify, make_response
 
 #Create Flask app instance
 app = Flask(__name__)
+
+#Allow cross-origin requests from the frontend
+@app.after_request
+def add_cors_headers(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    return response
 
 
 #Connect to the database using environment variables
