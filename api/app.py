@@ -1,6 +1,6 @@
 import os
 import psycopg2
-from flask import Flask, jsonify, make_response
+from flask import Flask, jsonify
 
 #Create Flask app instance
 app = Flask(__name__)

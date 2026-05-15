@@ -56,7 +56,7 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: coinsafe
     volumes:
-      - pgdata:/var/lib/postgresql/data                    #Data persists outside the countainer
+      - pgdata:/var/lib/postgresql/data                    #Data persists outside the container
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro #Run init.sql on startup to create tables and insert data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"] # Check if PostgreSQL is ready to accept connections
