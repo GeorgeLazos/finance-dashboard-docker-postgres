@@ -1,14 +1,13 @@
 # CoinSafe Financial Dashboard
 
-A containerised multi-tier financial dashboard application built with Docker, featuring 
-network isolation, resource management, and production-ready security practices.
+A containerised multi-tier financial dashboard built with Docker Compose: an Nginx frontend, a Flask REST API and a PostgreSQL database, with network isolation and resource limits. Built for the Cloud Computing in AI module of my MSc at Queen Mary University of London.
 
 ---
 
 ## Project structure
 
 ```
-assignment_2/
+finance-dashboard-docker-postgres/
 ├── frontend/
 │   ├── index.html
 │   ├── package.json
@@ -24,8 +23,7 @@ assignment_2/
 ├── init.sql
 ├── docker-compose.yml
 ├── .dockerignore
-├── .gitignore
-└── .git/
+└── .gitignore
 ```
 
 ---
@@ -36,9 +34,11 @@ assignment_2/
 docker compose up --build
 ```
 
+Database credentials in `docker-compose.yml` are local development defaults, not for production use.
+
 | Service | URL |
 |---|---|
-| Dashboard | http://localhost:80 | 
+| Dashboard | http://localhost:80 |
 | API — transactions | http://localhost:5000/api/transactions |
 | API — summary | http://localhost:5000/api/summary |
 | API — health | http://localhost:5000/health |
@@ -77,7 +77,7 @@ docker compose run --rm reporter
 
 To view the output:
 ```bash
-docker logs assignment_2-reporter-1
+docker compose logs reporter
 ```
 
 To stop everything:
@@ -108,16 +108,16 @@ The `api` row should show `256MiB` in the LIMIT column.
 
 ---
 
-## Questions
+## Design decisions
 
-### Q1 — Why is the multi-stage build more secure for the frontend?
+### Why the frontend uses a multi-stage build
 
 The multi-stage build produces a more secure final image by ensuring it contains only what is needed to serve the application at runtime. The first stage uses a Node.js image to install dependencies and run the build step, producing a compiled dist/ folder. The second stage starts fresh from nginx:alpine and copies only that output. Node.js, npm, all source files, and every installed package are discarded. Smaller images have fewer installed packages and therefore fewer known vulnerabilities. Even if the container were compromised, an attacker would find only the compiled static files with no build tools, no source code, and no installed packages to exploit.
 
-### Q2 — Why is the database completely isolated from the frontend?
+### Why the database is isolated from the frontend
 
 The database is isolated from the frontend because exposing a database directly to a public facing layer is a critical security risk. In a financial application, the database contains sensitive transaction data that should only be accessible through a controlled interface. Placing the database exclusively on a private network and routing all access through the api limits what is exposed and reduces the number of potential vulnerabilities. Docker enforces network separation through namespaces, ensuring containers on different networks have no IP route between them. This means any request to the database must pass through the api, where validation and logging can be applied. Even if the frontend container were compromised, the attacker would gain no direct access to the data.
 
-### Q3 — How do ENTRYPOINT and CMD interact in the reporter Dockerfile?
+### How ENTRYPOINT and CMD work together in the reporter
 
 In the reporter Dockerfile, `ENTRYPOINT ["python"]` and `CMD ["report.py"]` work together to define how the container runs. ENTRYPOINT sets the executable that always runs, CMD provides the default argument passed to it, and Docker combines them at runtime into `python report.py`. They are deliberately separated rather than written as a single command because it makes the container more flexible — ENTRYPOINT stays fixed while CMD can be swapped out at runtime by passing a different argument. This means the container behaves like a named command with a sensible default, but can be pointed at a different script without changing the Dockerfile.
